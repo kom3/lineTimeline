@@ -1,8 +1,8 @@
 # lineTimeline
 Line Timeline API
 
-<i>Ini merupakan proyek sampingan atau proyek waktu luang, dengan class ini, kamu bisa mengakses berbagai API yang tersedia di Line Timeline.</i>
-<i>Gunakan tab ISSUES untuk melaporkan bug, dan PULL REQUEST untuk meminta pembaruan, atau anda bisa melakukan commit pada projek!<i>
+<p><i>Ini merupakan proyek sampingan atau proyek waktu luang, dengan class ini, kamu bisa mengakses berbagai API yang tersedia di Line Timeline.</i></p>
+<p><i>Gunakan tab ISSUES untuk melaporkan bug, dan PULL REQUEST untuk meminta pembaruan, atau anda bisa melakukan commit pada projek!</i></p>
 
 <h1>Setup</h1>
 <p>Lakukan yang kamu ketahui dan percayai!</p>
