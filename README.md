@@ -37,6 +37,7 @@ if($return){
 });</pre>
 <p>Berikut contoh penggunaan like timeline dengan callback</p>
 <pre>$app->likeTimeline(2, 0, 1, 1, function($error){
+  // Fungsi ini akan ter-execute setiap melakukan like! Bukan jika task selesai
   if($error){
     echo "Gagal Like!";
   } else {
