@@ -1,5 +1,7 @@
 <?php
 
+namespace Line;
+
 class LineTimeline {
 
     private $line_host = 'https://timeline.line.me/api/';
@@ -121,18 +123,16 @@ class LineTimeline {
         @param $callback callable
         @return 
     */
-    public function likeTimeline($max = 1, $reaction = 0, $mode = 1, $share_mode = 1, callable $callback = NULL){
+    public function likeTimeline($user = NULL, $max = 1, $reaction = 0, $mode = 1, $share_mode = 1, callable $callback = NULL){
         $this->sessID();
         if(!in_array($mode, [1,2,3])) throw new Exception('Invalid mode!');
         if(!in_array($share_mode, [1,2,3,4])) throw new Exception('Invalid share mode!');
         if(!in_array($reaction, [0,1,2,3,4,5,6])) throw new Exception('Invalid reaction id!');
-        $this->getHomeList(function($timeline) use ($max, $reaction, $mode, $share_mode, $callback){
+        $this->getHomeList($user, function($timeline) use ($max, $reaction, $mode, $share_mode, $callback){
             $n = 0;
             if(is_array($timeline) && count($timeline) > 0){
                 foreach($timeline as $tl){
-
                     if($n >= $max) break;
-
                     if($reaction == 0) $reaction = mt_rand(1, 6);
                     $post_d = $tl['post']['postInfo']['postId'];
                     $liked = $tl['post']['postInfo']['liked'];
@@ -141,20 +141,22 @@ class LineTimeline {
                         $n++;
                     }
                 }
-
                 return $this;
             } else {
                 throw new Exception("Error occured!");
             }
         });        
     }
-    private function getHomeList(callable $callback = NULL){
+    private function getHomeList($user_id = NULL, callable $callback = NULL){
+        // $user_id example : _dQXvILQLzuN5-jSNMrfUNcemoCbkLSmRijRjFrU
         $this->sessID();
         if(empty($this->user)) $this->userinfo();
         if(empty($this->user) or empty($this->home_id)) throw new Exception('Invalid user info!');
-
-        $http = $this->response($this->http('feed/list.json?postLimit'.$this->post_limit.'10&commentLimit=2&likeLimit=20&order=TIME&requestTime=' . time()));
-        
+        if($user_id == NULL){
+            $http = $this->response($this->http('feed/list.json?postLimit='.$this->post_limit.'&commentLimit=2&likeLimit=20&order=TIME&requestTime=' . time()));
+        } else {
+            $http = $this->response($this->http('post/list.json?homeId='.$user_id.'&postLimit='.$this->post_limit.'&commentLimit=2&likeLimit=20&requestTime=' . time()));
+        }
         if($this->isOK()){
             if(count($http['feeds']) < 1) throw new Exception('Invalid response data!');
             if(is_callable($callback) && $callback != NULL){
@@ -231,6 +233,7 @@ class LineTimeline {
     }
     private function response($response, $return = false){
         $res = json_decode($response[1], true);
+        var_dump($res);exit;
         if(!empty($res) && $res['message'] == 'success' && !empty($res['result'])){
             $this->is_true_last = true;
         } else {
@@ -281,7 +284,7 @@ class LineTimeline {
             Connection: keep-alive
             Accept: application/json, text/plain, */*
             X-Timeline-WebVersion: 1.4.2
-            X-Line-AcceptLanguage: ja
+            X-Line-AcceptLanguage: en
             User-Agent: Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36
             Origin: https://timeline.line.me
             Content-Type: application/json;charset=UTF-8
