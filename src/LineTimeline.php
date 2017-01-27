@@ -233,13 +233,11 @@ class LineTimeline {
     }
     private function response($response, $return = false){
         $res = json_decode($response[1], true);
-        var_dump($res);exit;
         if(!empty($res) && $res['message'] == 'success' && !empty($res['result'])){
             $this->is_true_last = true;
         } else {
             $this->is_true_last = false;
         }
-
         if($this->is_true_last){
             return $res['result'];
         } else {
