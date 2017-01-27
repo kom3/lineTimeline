@@ -5,12 +5,15 @@ namespace Line;
 class LineTimeline {
 
     private $line_host = 'https://timeline.line.me/api/';
+    public $timeline_order = 'TIME'; // RANKING
     public $post_limit = 10;
     public $user;
     public $gnb;
     public $home_id;
     public $session_id;
+
     private $is_true_last = false;
+    private $last_response = [];
 
     public function __construct(){
         // To do...
@@ -23,6 +26,15 @@ class LineTimeline {
     public function setSession($ids){
         $this->session_id = $ids;
         return $this;
+    }
+    /*
+        @title Set Type Order Untuk Timeline
+        @param $param string
+        @return
+    */
+    public function order($param){
+        if(!in_array($param, ['TIME', 'RANKING'])) throw new Exception("Invalid Order Type");
+        $this->timeline_order = $param;
     }
     /*
         @return
@@ -39,6 +51,48 @@ class LineTimeline {
         } else {
             throw new Exception('Invalid sesssion!');
         }
+    }
+    /*
+        @title Get Latest Response if One
+        @param
+        @return
+    */
+    public function get(){
+        return $this->last_response;
+    }
+    /*
+        @title Get Notification
+        @param
+        @return
+    */
+    public function notification(){
+        $http = $this->response($this->http('gnb/noticenter.json'));
+        if($this->isOK()){
+            return $http['notifications'];
+        } else {
+            throw new Exception('Invalid sesssion!');
+        }
+    }
+    /*
+        @title Get Friend List
+        @param $total integer
+        @param $callback callable
+        @return
+    */
+    public function friendList($total, callable $callback = NULL){
+        if(!is_numeric($total) OR $total <= 0) throw new Exception("Invalid total!");
+        $multiple = ($total <= 20) ? 1 : ($total - ($total % 20)) / 20;
+        if($total % 20 != 0) $multiple++;
+        $tmp_arr = [];
+        for($i=0;$i<$multiple;$i++){
+            $scrool_id = ($i * 20) + 1;
+            $this->getFriend($scrool_id, function($data) use (&$tmp_arr){
+                if(empty($data) OR count($data) == 0) break;
+                $tmp_arr = array_merge($tmp_arr, $data);
+            });
+        }
+        $this->last_response = array_slice($tmp_arr, 0, $total);
+        return ($this->_end($this->isOK(), $callback) == true);
     }
     /*
         @title Post Status to Timeline
@@ -67,8 +121,7 @@ class LineTimeline {
         $post = '{"postInfo":{"readPermission":{"type":"'.$permission.'","gids":null}},"contents":{"text":"'.$text.'","largeText":'.$large_text.',"stickers":[],"media":[]}}';
         $http = $this->response($this->http('post/create.json?sourceType=TIMELINE ', $post));
         return ($this->_end($this->isOK(), $callback) == true);
-    }
-    
+    } 
     /*
         @title Comment a Post by Post ID
         @param $post_id string
@@ -147,13 +200,26 @@ class LineTimeline {
             }
         });        
     }
+    private function getFriend($scrool_id = 1, callable $callback = NULL){
+        $http = $this->response($this->http('friend/list.json?scrollId='.$scrool_id.'&limit=20'));
+        if($this->isOK()){
+            if(empty($http['friends'])) throw new Exception('Invalid response data!');
+            if(is_callable($callback) && $callback != NULL){
+                $callback($http['friends']);
+            } else {
+                return $http['friends'];
+            }
+        } else {
+            throw new Exception('Invalid session data!');
+        }
+    }
     private function getHomeList($user_id = NULL, callable $callback = NULL){
         // $user_id example : _dQXvILQLzuN5-jSNMrfUNcemoCbkLSmRijRjFrU
         $this->sessID();
         if(empty($this->user)) $this->userinfo();
         if(empty($this->user) or empty($this->home_id)) throw new Exception('Invalid user info!');
         if($user_id == NULL){
-            $http = $this->response($this->http('feed/list.json?postLimit='.$this->post_limit.'&commentLimit=2&likeLimit=20&order=TIME&requestTime=' . time()));
+            $http = $this->response($this->http('feed/list.json?postLimit='.$this->post_limit.'&commentLimit=2&likeLimit=20&order='.$this->timeline_order.'&requestTime=' . time()));
         } else {
             $http = $this->response($this->http('post/list.json?homeId='.$user_id.'&postLimit='.$this->post_limit.'&commentLimit=2&likeLimit=20&requestTime=' . time()));
         }
@@ -247,7 +313,7 @@ class LineTimeline {
     private function _end($isOK, $callback){
         if($isOK == true){
             if($callback != NULL && is_callable($callback)){
-                $callback(false);
+                $callback(false, $this);
             } else {
                 return true;
             }
@@ -297,4 +363,8 @@ class LineTimeline {
             return trim($val);
         }, explode("\n", $ht));
     }
+}
+
+class Exception extends \Exception {
+
 }
