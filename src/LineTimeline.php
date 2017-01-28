@@ -94,6 +94,7 @@ class LineTimeline {
         $this->last_response = array_slice($tmp_arr, 0, $total);
         return ($this->_end($this->isOK(), $callback) == true);
     }
+
     /*
         @title Post Status to Timeline
         @param $text string
@@ -102,8 +103,12 @@ class LineTimeline {
         @param $callback callable
         @return
     */
-    public function postTimeline($text, $type = 1, $large_text = false, callable $callback = NULL){
+    public function postTimeline($text, $type = 1, $large_text = false, $sticker = [], callable $callback = NULL){
         $this->sessId();
+        /* Sticker example
+        $sticker[] = ["id"=>5,"packageId"=>1,"packageVersion"=>100];
+        $sticker[] = ["id"=>1,"packageId"=>1,"packageVersion"=>100];
+        */
         switch($type){
             case 1:
                 $permission = 'ALL';
@@ -118,10 +123,64 @@ class LineTimeline {
                 throw new Exception("Invalid post type!");
         }
         $large_text = ($large_text == true) ? 'true' : 'false';
-        $post = '{"postInfo":{"readPermission":{"type":"'.$permission.'","gids":null}},"contents":{"text":"'.$text.'","largeText":'.$large_text.',"stickers":[],"media":[]}}';
+        $stickers = json_encode($sticker);
+        $post = '{"postInfo":{"readPermission":{"type":"'.$permission.'","gids":null}},"contents":{"text":"'.$text.'","largeText":'.$large_text.',"stickers":'.$stickers.',"media":[]}}';
         $http = $this->response($this->http('post/create.json?sourceType=TIMELINE ', $post));
         return ($this->_end($this->isOK(), $callback) == true);
-    } 
+    }
+    /*
+        @title Delete Comment by ID and Comment Id
+        @param $postid string
+    */
+    public function deleteComment($postid, $commentid, callable $callback = NULL){
+        $this->sessID();
+        $post = '{"postId":"'.$postid.'","actorId":"x","commentId":"'.$commentid.'"}';
+        $http = $this->response($this->http('post/delete.json?sourceType=TIMELINE&homeId=' . $this->home_id, $post));
+        return ($this->_end($this->isOK(), $callback) == true);
+    }
+    /*
+        @title Add Friend
+        @param $homeid string
+    */
+    public function addFriend($homeid, callable $callback = NULL){
+        $this->sessID();
+        $post = '{"mid":"' . $homeid . '"}';
+        $http = $this->response($this->http('friend/add.json', $post));
+        return ($this->_end($this->isOK(), $callback) == true);
+    }
+    /*
+        @title Delete Post by ID 
+        @param $postid string
+    */
+    public function deletePost($postid, callable $callback = NULL){
+        $this->sessID();
+        $post = '{"postId":"'.$postid.'"}';
+        $http = $this->response($this->http('post/delete.json?sourceType=TIMELINE&homeId=' . $this->home_id, $post));
+        return ($this->_end($this->isOK(), $callback) == true);
+    }
+    /*
+        @title Get group list
+        @param $limit integer
+        $param $callback callable
+    */
+    public function groupList($limit = 100, callable $callback = NULL){
+        $this->sessID();
+        $http = $this->response($this->http('group/list.json?limit=' . $limit));
+        $this->last_response = $http;
+        return ($this->_end($this->isOK(), $callback) == true);
+    }
+    /*
+        @title Search Post by Hashtag 
+        @param $hashtag string
+        @param $limit integer 
+        $param $callback callable
+    */
+    public function searchByHashtag($hashtag, $limit = 10, callable $callback = NULL){
+        $this->sessID();
+        $http = $this->response($this->http('hashtag/search.json?query='.$hashtag.'&postLimit='.$limit.'&commentLimit=1&likeLimit=1'));
+        $this->last_response = $http;
+        return ($this->_end($this->isOK(), $callback) == true);
+    }
     /*
         @title Comment a Post by Post ID
         @param $home_id string
@@ -298,7 +357,7 @@ class LineTimeline {
     }
     private function response($response, $return = false){
         $res = json_decode($response[1], true);
-        if(!empty($res) && $res['message'] == 'success' && !empty($res['result'])){
+        if(!empty($res) && $res['message'] == 'success' && isset($res['result'])){
             $this->is_true_last = true;
         } else {
             $this->is_true_last = false;
