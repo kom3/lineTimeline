@@ -124,17 +124,16 @@ class LineTimeline {
     } 
     /*
         @title Comment a Post by Post ID
+        @param $home_id string
         @param $post_id string
         @param $comment_text string
         @param $callback callable
         @return
-
-        Not working for now!
     */
-    public function commentPost($post_id, $comment_text, callable $callback = NULL){
+    public function commentPost($home_id, $post_id, $comment_text, callable $callback = NULL){
         $this->sessID();
-        $post = '{"contentId":"'.$post_id.'","commentText":"'.$comment_text.'","contentsList":[],"actorId":"x","recallInfos":[]}';
-        $http = $this->response($this->http('comment/create.json?sourceType=MYHOME_END&homeId=x', $post));
+        $post = '{"contentId":"'.$post_id.'","commentText":"'.$comment_text.'","contentsList":[],"actorId":"'.$this->home_id.'","recallInfos":[]}';
+        $http = $this->response($this->http('comment/create.json?sourceType=MYHOME_END&homeId=' . $home_id, $post));
         return ($this->_end($this->isOK(), $callback) == true);
     }
     /*
