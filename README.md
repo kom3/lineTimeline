@@ -1,4 +1,5 @@
-# lineTimeline
+# LineTimeline
+# Repository ini sudah tidak di maintenance lagi karena kesibukan saya, mohon maap dan mungkin nanti akan di handle lagi.
 Line Timeline API
 
 <p><i>Ini merupakan proyek sampingan atau proyek waktu luang, dengan class ini, kamu bisa mengakses berbagai API yang tersedia di Line Timeline.</i></p>
